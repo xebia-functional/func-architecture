@@ -1,0 +1,13 @@
+import scalaz._
+import Scalaz._
+import scalaz.concurrent._
+import rapture.core._
+import rapture.core.scalazInterop
+import kraken.free.interpreters._
+import kraken.free.ops._
+import kraken.free.ops.Op._
+import kraken.services.services._
+
+val replesent = REPLesent(input="presentation.md", intp=$intp)
+import replesent._
+f
