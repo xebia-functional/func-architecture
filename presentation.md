@@ -16,8 +16,8 @@ build-lists: true
 
 ## Acknowledgment ##
 
-- Scalaz 
-- Rapture : Jon Pretty 
+- Scalaz
+- Rapture : Jon Pretty
 - Miles Sabin : Shapeless
 - Rúnar Bjarnason : Compositional Application Architecture With Reasonably Priced Monads
 - Noel Markham : A purely functional approach to building large applications
@@ -62,13 +62,15 @@ for a given input it returns a type constructor…
 
 ## Composability ##
 
-When the type constructor `M[_]` it's a Monad it can be composed and sequenced in 
+When the type constructor `M[_]` it's a Monad it can be composed and sequenced in
 for comprehensions
 
 ```scala
+import scala.util.Try
+
 val composed = for {
-  a <- Kleisli((x : String) ⇒ Option(x.toInt + 1))
-  b <- Kleisli((x : String) ⇒ Option(x.toInt * 2))
+  a <- Kleisli((x : String) ⇒  Try(x.toInt + 1).toOption)
+  b <- Kleisli((x : String) ⇒  Try(x.toInt * 2).toOption)
 } yield a + b
 ```
 
@@ -80,9 +82,11 @@ The deferred injection of the input parameter enables
 **Dependency Injection**
 
 ```scala
+import scala.util.Try
+
 val composed = for {
-  a <- Kleisli((x : String) ⇒ Option(x.toInt + 1))
-  b <- Kleisli((x : String) ⇒ Option(x.toInt * 2))
+  a <- Kleisli((x : String) ⇒  Try(x.toInt + 1).toOption)
+  b <- Kleisli((x : String) ⇒  Try(x.toInt * 2).toOption)
 } yield a + b
 
 composed.run("1")
@@ -128,9 +132,9 @@ What is a Free Monad?
 sealed trait Op[A]
 
 case class Ask[A](a: () ⇒ A) extends Op[A]
-    
+
 case class Async[A](a: () ⇒ A) extends Op[A]
-    
+
 case class Tell(a: () ⇒ Unit) extends Op[Unit]
 ```
 
@@ -158,7 +162,7 @@ def tell(a: ⇒ Unit): OpMonad[Unit] = Free.liftFC(Tell(() ⇒ a))
 ```scala
 type OpMonad[A] = Free.FreeC[Op, A]
 
-implicit val MonadOp: Monad[OpMonad] = 
+implicit val MonadOp: Monad[OpMonad] =
     Free.freeMonad[({type λ[α] = Coyoneda[Op, α]})#λ]
 ```
 
@@ -167,7 +171,7 @@ implicit val MonadOp: Monad[OpMonad] =
 ## Interpretation : Free Monads ##
 
 At this point a program like this is nothing but **Data**
-describing the sequence of execution but **FREE** 
+describing the sequence of execution but **FREE**
 of it's runtime interpretation.
 
 ```scala
@@ -182,10 +186,10 @@ val program = for {
 
 ## Interpretation : Free Monads ##
 
-We isolate interpretations 
+We isolate interpretations
 via Natural transformations AKA `Interpreters`.
 
-In other words with map over 
+In other words with map over
 the outer type constructor `Op`
 
 ```scala
@@ -202,7 +206,7 @@ object ProdInterpreter extends (Op ~> Task) {
 
 ## Interpretation : Free Monads ##
 
-We can have different interpreters for our 
+We can have different interpreters for our
 production / test / experimental code.
 
 ```scala
@@ -228,7 +232,7 @@ object TestInterpreter extends (Op ~> Id.Id) {
 
 ## Fault Tolerance ##
 
-Most containers and patterns generalize to the 
+Most containers and patterns generalize to the
 most common super-type or simply `Throwable` loosing type information.
 
 ```scala
@@ -256,7 +260,7 @@ We could use instead…
 
 ## Fault Tolerance : Dependently-typed Acc Exceptions ##
 
-Introducing `rapture.core.Result` 
+Introducing `rapture.core.Result`
 
 ---
 
@@ -353,7 +357,7 @@ because there are 3 nested monads
 `Monad Transformers` to the rescue!
 
 ```scala
-type ServiceDef[D, A, B <: Exception] = 
+type ServiceDef[D, A, B <: Exception] =
     ResultT[({type λ[α] = ReaderT[OpMonad, D, α]})#λ, A, B]
 ```
 
